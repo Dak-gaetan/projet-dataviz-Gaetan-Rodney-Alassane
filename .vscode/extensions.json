@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "ms-azuretools.vscode-docker",
+    "charliermarsh.ruff",
+    "redhat.vscode-yaml",
+    "mechatroner.rainbow-csv",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "eamodio.gitlens",
+    "stardog-union.vscode-langserver-turtle-trig"
+  ]
+}

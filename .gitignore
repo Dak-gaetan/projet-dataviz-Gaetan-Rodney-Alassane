@@ -1,0 +1,26 @@
+# Données (jamais versionnées, cf. consigne)
+data/*
+!data/.gitkeep
+
+# Secrets et environnement
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Spark / Delta locaux
+spark-warehouse/
+metastore_db/
+derby.log
+
+# IDE / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.DS_Store
+Thumbs.db

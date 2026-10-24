@@ -1,0 +1,13 @@
+delta-spark==3.2.1
+pandas
+pyarrow
+psycopg2-binary
+sqlalchemy
+requests
+boto3
+rdflib
+pyvis
+plotly
+altair
+matplotlib
+seaborn

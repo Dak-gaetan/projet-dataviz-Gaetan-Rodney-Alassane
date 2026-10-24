@@ -1,0 +1,36 @@
+@prefix :     <http://example.org/velib#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<http://example.org/velib> a owl:Ontology ;
+    rdfs:label "Ontologie Vélib" ;
+    rdfs:comment "Concepts du domaine : stations, disponibilité, zones, instants." .
+
+# --- Classes ---
+:Station      a owl:Class ; rdfs:label "Station" ; rdfs:comment "Borne Vélib d'un emplacement donné." .
+:Zone         a owl:Class ; rdfs:label "Zone" ; rdfs:comment "Arrondissement ou commune." .
+:Mesure       a owl:Class ; rdfs:label "Mesure de disponibilité" ; rdfs:comment "Instantané de l'état d'une station." .
+:TypeVelo     a owl:Class ; rdfs:label "Type de vélo" .
+:VeloMecanique a owl:Class ; rdfs:subClassOf :TypeVelo .
+:VeloElectrique a owl:Class ; rdfs:subClassOf :TypeVelo .
+:Penurie      a owl:Class ; rdfs:label "Pénurie" ; rdfs:comment "Station sans vélo disponible." .
+:Saturation   a owl:Class ; rdfs:label "Saturation" ; rdfs:comment "Station sans place libre." .
+:Penurie     rdfs:subClassOf :Mesure .
+:Saturation  rdfs:subClassOf :Mesure .
+
+# --- Propriétés d'objet ---
+:situeDans  a owl:ObjectProperty ; rdfs:domain :Station ; rdfs:range :Zone .
+:concerne   a owl:ObjectProperty ; rdfs:domain :Mesure  ; rdfs:range :Station .
+:proposeType a owl:ObjectProperty ; rdfs:domain :Mesure ; rdfs:range :TypeVelo .
+
+# --- Propriétés de données ---
+:stationId       a owl:DatatypeProperty ; rdfs:domain :Station ; rdfs:range xsd:string .
+:nom             a owl:DatatypeProperty ; rdfs:domain :Station ; rdfs:range xsd:string .
+:capacite        a owl:DatatypeProperty ; rdfs:domain :Station ; rdfs:range xsd:integer .
+:latitude        a owl:DatatypeProperty ; rdfs:domain :Station ; rdfs:range xsd:decimal .
+:longitude       a owl:DatatypeProperty ; rdfs:domain :Station ; rdfs:range xsd:decimal .
+:horodatage      a owl:DatatypeProperty ; rdfs:domain :Mesure  ; rdfs:range xsd:dateTime .
+:velosDisponibles a owl:DatatypeProperty ; rdfs:domain :Mesure ; rdfs:range xsd:integer .
+:placesDisponibles a owl:DatatypeProperty ; rdfs:domain :Mesure ; rdfs:range xsd:integer .

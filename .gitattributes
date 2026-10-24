@@ -1,0 +1,6 @@
+# Évite les fins de ligne CRLF (Windows) qui cassent les scripts dans Docker/WSL
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.ipynb text eol=lf
