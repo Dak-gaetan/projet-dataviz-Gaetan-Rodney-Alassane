@@ -20,6 +20,21 @@ services:
       - rustfs_data:/data
     restart: unless-stopped
 
+  # Collecte continue des instantanés Vélib vers ./data/velib_status
+  # Non lancé par défaut : docker compose --profile collect up -d collector
+  # Suivre l'avancement : docker compose logs -f collector
+  collector:
+    profiles: ["collect"]
+    build: ./docker/collector
+    container_name: velib-collector
+    env_file: .env
+    environment:
+      DATA_DIR: /app/data
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+    restart: unless-stopped
+
   postgres:
     image: postgres:16-alpine
     container_name: velib-postgres
@@ -39,7 +54,11 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Optionnel : JupyterLab dans Docker. Non lancé par défaut (les notebooks tournent
+  # dans VS Code avec l'environnement local). Pour l'activer :
+  #   docker compose --profile jupyter up -d
   jupyter:
+    profiles: ["jupyter"]
     build: ./docker/jupyter
     container_name: velib-jupyter
     depends_on:

@@ -1,0 +1,18 @@
+# Environnement local pour les notebooks (VS Code)
+# Python 3.12 recommandé (PySpark 3.5 ne supporte pas Python 3.13)
+# Installation : py -3.12 -m venv .venv ; .venv\Scripts\Activate.ps1 ; pip install -r requirements.txt
+ipykernel
+pyspark==3.5.3
+delta-spark==3.2.1
+pandas
+pyarrow
+psycopg2-binary
+sqlalchemy
+requests
+boto3
+rdflib
+pyvis
+plotly
+altair
+matplotlib
+seaborn

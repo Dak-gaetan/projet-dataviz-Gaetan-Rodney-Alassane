@@ -1,20 +1,26 @@
 # Projet dataviz : Vélib, où et quand manque-t-il des vélos ?
 
 Mastère Big Data & IA, M1, Sup de Vinci, session 2026-2027. Enseignant : M. L. Ndao.
-Auteurs : [Prénom Nom 1], [Prénom Nom 2]
+Auteurs : Gaetan, Rodney, Alassane
 
 ## 1. Jeu de données
 
 - **Source** : Paris Open Data, Vélib (disponibilité en temps réel + emplacement des stations).
-- **Volume** : instantanés collectés toutes les 5 min, objectif ≥ 2 millions de lignes.
+- **Volume** : instantanés collectés toutes les 2 min, objectif ≥ 2 millions de lignes.
 - **Dimensions** : temporelle (horodatage), géographique (station, arrondissement).
 - **Téléchargement** : `scripts/telecharger_donnees.sh` puis `src/collecter_velib.py`.
 
 ## 2. Persona
 
-[À compléter : qui est le décideur, ce qu'il décide, à quelle fréquence.]
+**Le décideur** : le responsable de la régulation du parc Vélib, qui pilote les équipes déplaçant les vélos entre stations.
 
-**Question principale** : [À compléter]
+**Ce qu'il décide** : quelles stations réapprovisionner ou désengorger, à quels créneaux horaires et dans quels secteurs.
+
+**Fréquence** : plusieurs fois par jour (tournée du jour) et chaque semaine (plan type semaine / week-end).
+
+**Question principale** : quelles stations et quels secteurs manquent de vélos ou de places, et à quelles heures de la semaine ?
+
+Détails dans [`docs/persona.md`](docs/persona.md).
 
 ## 3. Architecture
 
@@ -23,7 +29,17 @@ Ontologie `.ttl` + requêtes SPARQL pour la couche sémantique.
 
 ## 4. Lancer le projet
 
-**Prérequis** : Docker Desktop démarré, Git, et (pour les scripts `.sh` sous Windows) Git Bash ou WSL.
+### Installations nécessaires (à faire une fois)
+
+| Outil | Version | Pourquoi | Vérifier |
+|---|---|---|---|
+| Docker Desktop | récent, démarré (« Engine running ») | RustFS, PostgreSQL, Streamlit, collecte | `docker --version` |
+| Git | récent | versionnage, scripts `.sh` via Git Bash | `git --version` |
+| Python | **3.12** (pas 3.13 : PySpark 3.5 ne le supporte pas) | notebooks et PySpark | `py -3.12 --version` |
+| Java (JDK) | **17** (pas 21 ni plus récent : Spark 3.5 ne démarre pas) | requis par Spark | `java -version` |
+| VS Code + extensions Python et Jupyter | récent | exécuter les notebooks | |
+
+Prévoir au moins 10 Go d'espace libre pour Docker et Spark (les bibliothèques Spark se téléchargent au premier lancement d'un notebook).
 
 ### Étape 1 : récupérer le dépôt et la configuration
 
@@ -53,28 +69,55 @@ Les données ne sont pas versionnées. Depuis Git Bash ou WSL :
 bash scripts/telecharger_donnees.sh
 ```
 
-Le jeu temps réel ne fournit qu'un instantané à la fois. Pour accumuler l'historique (objectif ≥ 2 M de lignes), lancer la collecte et la laisser tourner plusieurs jours :
+Le jeu temps réel ne fournit qu'un instantané à la fois (~1 500 stations). Pour accumuler l'historique (objectif ≥ 2 M de lignes), lancer la collecte continue et la laisser tourner (PC allumé, sans veille) :
 
 ```bash
-python src/collecter_velib.py
+docker compose --profile collect up -d collector
+docker compose logs -f collector     # avancement en % de l'objectif
 ```
 
-### Étape 3 : démarrer les services
+Un instantané toutes les 2 min (`COLLECT_INTERVAL_S` dans `.env`) : environ 2 M de lignes en 2 jours, une semaine complète de données en 7 jours.
+
+### Étape 3 : démarrer les services Docker
 
 ```bash
 docker compose up -d
 ```
 
-> **Premier lancement long (plusieurs minutes)** : Docker télécharge les images et construit celle de Jupyter/PySpark (plusieurs Go). Spark télécharge aussi ses bibliothèques (Delta, S3, PostgreSQL) à la première exécution d'un notebook. Les lancements suivants sont rapides.
+Services démarrés : RustFS (data lake), PostgreSQL (gold), Streamlit (dashboard).
+Vérifier : `docker compose ps`. Le bucket du data lake est créé par le notebook 01 (`from lake import creer_bucket`).
 
-Vérifier que tout tourne : `docker compose ps` (ou `bash scripts/diagnostic.sh`).
+> JupyterLab dans Docker est disponible en option (`docker compose --profile jupyter up -d`) mais l'image est lourde. Par défaut, les notebooks tournent dans VS Code (étape 4).
 
-Services démarrés : RustFS (data lake), PostgreSQL (gold), JupyterLab + Spark, Streamlit.
-Le bucket du data lake est créé par le notebook 01 (`from lake import creer_bucket`).
+### Étape 4 : environnement Python local et notebooks
 
-### Étape 4 : exécuter les notebooks dans l'ordre
+Créer l'environnement Python et installer les paquets (une seule fois, à la racine du projet) :
 
-JupyterLab : http://localhost:8888 (token : valeur de `JUPYTER_TOKEN` dans `.env`, `velib` par défaut).
+```bash
+# Git Bash (Windows)
+py -3.12 -m venv .venv
+source .venv/Scripts/activate
+python -m pip install -r requirements.txt
+```
+```powershell
+# PowerShell (Windows)
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+```bash
+# Linux / macOS
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+Dans VS Code : ouvrir un notebook, cliquer sur **Sélectionner le noyau** > **Environnements Python** > **`.venv`** (Python 3.12), puis exécuter dans l'ordre. L'activation du terminal n'est utile que pour installer les paquets.
+
+Problèmes fréquents :
+- `import pyspark` échoue : le noyau n'est pas `.venv`, ou Python n'est pas en 3.12.
+- Spark ne démarre pas ou reste bloqué sans message : vérifier `java -version`. Si la version n'est pas 17 (par exemple 25), installer Temurin 17 et renseigner `SPARK_JAVA_HOME` dans `.env` (voir `.env.example`).
+- Spark sous Windows signale `winutils` ou `HADOOP_HOME` : avertissement sans gravité pour la lecture, mais si l'écriture échoue, installer `winutils` pour Hadoop 3.3.
 
 1. `01_extraction_bronze.ipynb`
 2. `02_silver_gold.ipynb`
