@@ -1,14 +1,8 @@
-# JupyterLab + PySpark 3.5 (compatible Delta Lake 3.2 et hadoop-aws 3.3.4)
-FROM quay.io/jupyter/pyspark-notebook:spark-3.5.3
+FROM python:3.12-slim
 
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
-USER ${NB_UID}
+RUN pip install --no-cache-dir requests
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
 
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
-
-# Les JARs (Delta, S3A) sont téléchargés par Spark au premier lancement
-# via spark.jars.packages (cf. src/spark_session.py)
-ENV PYTHONPATH=/home/jovyan/work/src
-EXPOSE 8888 4040
+# Le code (src/) et les données (data/) sont montés depuis le dépôt par docker-compose
+CMD ["python", "src/collecter_velib.py"]
