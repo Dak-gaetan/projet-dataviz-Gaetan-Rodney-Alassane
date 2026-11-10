@@ -1,5 +1,28 @@
-"""Configuration centralisée (lue depuis les variables d'environnement / .env)."""
+"""Configuration centralisée.
+
+Les valeurs viennent des variables d'environnement ; à défaut, du fichier .env à la
+racine du projet (lu ici sans dépendance), pour que les notebooks lancés dans VS Code
+fonctionnent sans réglage supplémentaire.
+"""
 import os
+from pathlib import Path
+
+RACINE = Path(__file__).resolve().parents[1]
+
+
+def _charger_dotenv() -> None:
+    fichier = RACINE / ".env"
+    if not fichier.exists():
+        return
+    for ligne in fichier.read_text(encoding="utf-8").splitlines():
+        ligne = ligne.strip()
+        if not ligne or ligne.startswith("#") or "=" not in ligne:
+            continue
+        cle, valeur = ligne.split("=", 1)
+        os.environ.setdefault(cle.strip(), valeur.strip())
+
+
+_charger_dotenv()
 
 # --- Data lake (RustFS, API S3) ---
 RUSTFS_ENDPOINT = os.getenv("RUSTFS_ENDPOINT", "http://localhost:9000")
@@ -20,5 +43,6 @@ PG_PASSWORD = os.getenv("POSTGRES_PASSWORD", "velib")
 PG_JDBC_URL = f"jdbc:postgresql://{PG_HOST}:{PG_PORT}/{PG_DB}"
 PG_SQLALCHEMY_URL = f"postgresql+psycopg2://{PG_USER}:{PG_PASSWORD}@{PG_HOST}:{PG_PORT}/{PG_DB}"
 
-# --- Données locales (téléchargées par scripts/telecharger_donnees.sh) ---
-DATA_DIR = os.getenv("DATA_DIR", "/home/jovyan/work/data")
+# --- Données locales (collectées par src/collecter_velib.py) ---
+_data = Path(os.getenv("DATA_DIR", "data"))
+DATA_DIR = _data if _data.is_absolute() else RACINE / _data
